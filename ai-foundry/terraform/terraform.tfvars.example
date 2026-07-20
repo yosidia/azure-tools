@@ -1,0 +1,70 @@
+############################################################
+# Example input values for the AI Foundry landing-zone stack.
+#
+# Copy this file to terraform.tfvars and replace every
+# placeholder with values from your own environment.
+# terraform.tfvars is git-ignored — never commit real
+# subscription IDs, resource IDs, or internal IP ranges.
+############################################################
+
+# Core / naming
+location            = "eastus2"
+location_short      = "eus2"
+environment         = "dev"
+environment_tag     = "Development"
+project_name        = "myaiproject"
+domain_ai           = "ai"
+domain_correctors   = "ai"
+resource_group_name = "rg-ai-foundry"
+
+# Explicit resource names (override auto-generated names if you need
+# to match an existing deployment; otherwise omit and let locals.tf
+# derive names from project_name + the random suffix)
+foundry_account_name           = "myaifoundry"
+foundry_project_name           = "myproject"
+storage_account_name_override  = "myaifoundrystorage"
+cosmosdb_account_name_override = "cosmosdbmyai"
+ai_search_name_override        = "ais-myai"
+
+# Tagging / ownership
+application_name  = "ai-foundry-landing-zone"
+application_owner = "platform-team@example.com"
+
+# Networking
+# All private endpoints land in a dedicated PE subnet; agent network
+# injection uses a separate delegated subnet for the Foundry managed network.
+foundry_subnet_id           = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/virtualNetworks/<your-vnet>/subnets/<pe-subnet>"
+foundry_subnet_injection_id = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/virtualNetworks/<your-vnet>/subnets/<foundry-managed-network-subnet>"
+
+# Private DNS zones (typically centralized in a hub/connectivity subscription)
+private_dns_zone_id_cognitiveservices = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.cognitiveservices.azure.com"
+private_dns_zone_id_openai            = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.openai.azure.com"
+private_dns_zone_id_aiservices        = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.services.ai.azure.com"
+private_dns_zone_id_search            = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.search.windows.net"
+private_dns_zone_id_cosmos_sql        = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.documents.azure.com"
+private_dns_zone_id_storage_blob      = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
+
+# Azure Monitor private DNS zones (centralized in the hub) used by the AMPLS private endpoint
+private_dns_zone_id_monitor  = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.monitor.azure.com"
+private_dns_zone_id_oms      = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.oms.opinsights.azure.com"
+private_dns_zone_id_ods      = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.ods.opinsights.azure.com"
+private_dns_zone_id_agentsvc = "/subscriptions/<your-subscription-id>/resourceGroups/<hub-network-rg>/providers/Microsoft.Network/privateDnsZones/privatelink.agentsvc.azure-automation.net"
+
+# Service options
+ai_search_service_sku               = "basic"
+storage_account_replication_type    = "ZRS"
+enable_storage_dfs_endpoint         = false
+enable_storage_table_endpoint       = false
+foundry_network_acls_default_action = "Deny" # use "Allow" only while iterating; lock to "Deny" for production
+enable_collection_level_roles       = false
+foundry_v2                          = true
+
+# Firewall / NSG rules for private log streaming (agent -> Azure Monitor PE)
+manage_agent_log_nsg_rules           = true
+agent_subnet_nsg_name                = "<your-vnet>-agent-subnet-nsg"
+agent_subnet_nsg_resource_group_name = "<hub-network-rg>"
+pe_subnet_nsg_name                   = "<your-vnet>-pe-subnet-nsg"
+pe_subnet_nsg_resource_group_name    = "<hub-network-rg>"
+agent_subnet_address_prefix          = "10.0.2.0/24"
+pe_subnet_address_prefix             = "10.0.1.0/24"
+dns_resolver_ip                      = "10.0.0.4"

@@ -1,0 +1,65 @@
+// ============================================================
+// Diagnose Foundry agent file_search.msearch "server_error"
+// Run in: Application Insights (your Foundry account's App Insights
+// resource) -> Logs
+// (classic table names: traces, exceptions, dependencies, requests, customEvents)
+// ============================================================
+
+// ----- Q1: The actual outbound call to the AI Search service -----
+// This is the most likely place the real HTTP error (400/403/404/500) shows up,
+// with the request/response detail in customDimensions.
+dependencies
+| where timestamp > ago(1h)
+| where target has "search.windows.net"
+    or name has "search" or name has "msearch"
+    or data has "search.windows.net"
+| project timestamp, name, target, resultCode, success, duration,
+          data = tostring(data),
+          cd = tostring(customDimensions),
+          op = operation_Id
+| order by timestamp desc
+| take 50
+
+// ----- Q2: All errors/exceptions tied to file search, last 30 min -----
+union isfuzzy=true traces, exceptions, dependencies, requests, customEvents
+| where timestamp > ago(30m)
+| where itemType == "exception"
+    or (success == false)
+    or tostring(customDimensions) has_any ("file_search","msearch","vector","<your-search-service-name>","search.windows.net")
+    or name has_any ("msearch","file_search","invoke_agent")
+| project timestamp, itemType, name,
+          resultCode      = tostring(column_ifexists("resultCode","")),
+          success         = column_ifexists("success", dynamic(null)),
+          problemId       = tostring(column_ifexists("problemId","")),
+          outerMessage    = tostring(column_ifexists("outerMessage","")),
+          innermost       = tostring(column_ifexists("innermostMessage","")),
+          details         = tostring(column_ifexists("details","")),
+          message         = tostring(column_ifexists("message","")),
+          customDimensions= tostring(customDimensions),
+          op = operation_Id
+| order by timestamp desc
+| take 60
+
+// ----- Q3: Drill into ONE failing run by trace/operation id -----
+// Replace the id with the trace_id from the agent error (operation_Id == trace_id).
+let opId = "<trace-id-from-agent-error>";
+union isfuzzy=true traces, exceptions, dependencies, requests, customEvents
+| where timestamp > ago(3h)
+| where operation_Id == opId or operation_ParentId == opId
+    or tostring(customDimensions) has opId
+| order by timestamp asc
+| project timestamp, itemType, name,
+          resultCode       = tostring(column_ifexists("resultCode","")),
+          success          = column_ifexists("success", dynamic(null)),
+          outerMessage     = tostring(column_ifexists("outerMessage","")),
+          innermostMessage = tostring(column_ifexists("innermostMessage","")),
+          message          = tostring(column_ifexists("message","")),
+          customDimensions = tostring(customDimensions)
+
+// ============================================================
+// If your App Insights resource is workspace-based and you query the
+// Log Analytics workspace directly, use these table names instead:
+//   traces->AppTraces, exceptions->AppExceptions,
+//   dependencies->AppDependencies, requests->AppRequests,
+//   customEvents->AppEvents   (and Properties instead of customDimensions)
+// ============================================================
