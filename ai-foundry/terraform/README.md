@@ -8,6 +8,37 @@ AAD-only auth, and RBAC wired automatically.
 
 ## Architecture
 
+This landing zone deploys the **application landing zone** half of the
+diagram below (workload resources + subscription vending), and expects an
+existing **platform landing zone** (hub network, Azure Firewall, DNS
+Private Resolver, private DNS zones, DDoS Protection) to peer against —
+this Terraform does not create the hub.
+
+![Azure AI Foundry private landing zone architecture](images/architecture-diagram.png)
+
+Key points the diagram highlights:
+
+- **Protected ingress / controlled egress** — the Application Gateway + WAF
+  is the only public entry point; all outbound traffic from the workload
+  subnets is forced through the hub's Azure Firewall (egress and DNS
+  requests shown flowing down to the connectivity subscription).
+- **Everything workload-side sits behind private endpoints** in a dedicated
+  private-endpoints subnet — App Service, Storage, Key Vault, the AI Foundry
+  account, AI Search, Cosmos DB — with the Foundry Agent Service and App
+  Service each in their own delegated integration subnet.
+- **Foundry Agent Service dependencies** (AI Search, Cosmos DB, Storage) are
+  the same private Search/Cosmos/Storage instances this module provisions —
+  the diagram's dashed box just calls out which workload resources the
+  agent capability host consumes.
+- **Subscription vending** provides the spoke VNet (peered to the hub,
+  DNS delegated to the hub's Private Resolver), the user-defined route back
+  to the regional hub firewall, management-group placement, cost management,
+  Defender for Cloud enrollment, and org policy/role assignments — typically
+  applied once per subscription ahead of this Terraform.
+
+For the underlying Terraform module structure (as opposed to the full
+Azure reference architecture above), see the simplified summary below.
+
 ```
 Resource Group
  ├─ Monitoring (Log Analytics + App Insights, behind one AMPLS)
@@ -40,6 +71,7 @@ every other module.
 | [`providers.tf`](providers.tf) | Required provider versions: `azurerm >= 4.0`, `azapi >= 2.0` (used for the Foundry account/project/capability-host resources — these preview-surface APIs aren't in `azurerm` yet), `time >= 0.11`, `random >= 3.6`. |
 | [`terraform.tfvars.example`](terraform.tfvars.example) | Example variable values with placeholders — copy to `terraform.tfvars` (git-ignored) and fill in your own subscription/network values. |
 | [`modules/`](modules/) | The 8 child modules — see [`modules/README.md`](modules/README.md). |
+| [`images/`](images/) | Reference architecture diagram used above. |
 
 ## Deploying additional models
 
