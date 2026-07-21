@@ -12,6 +12,7 @@ private AI Search module for a non-Foundry project).
 | [`aisearch/`](aisearch/) | `azurerm_search_service`, private endpoint | SystemAssigned identity, `public_network_access_enabled = false`, configurable SKU (defaults to `basic`; use `standard` if you expect >15 indexes). |
 | [`cosmosDB/`](cosmosDB/) | `azurerm_cosmosdb_account`, private endpoint, diagnostic setting | Serverless/session-consistency defaults tuned for agent thread storage; ships diagnostics to the `monitoring` module's Log Analytics workspace. |
 | [`monitoring/`](monitoring/) | `azurerm_log_analytics_workspace`, `azurerm_application_insights`, Azure Monitor Private Link Scope (AMPLS) + scoped resources, private endpoint | A single AMPLS fronts both the workspace and App Insights so all telemetry ingestion/query stays private. |
+| [`foundryModel/`](foundryModel/) | `azapi_resource` model deployment (`Microsoft.CognitiveServices/accounts/deployments`) | Deploys one named model (e.g. a GPT model) onto an existing Foundry account. Called with `for_each` from the root module's `var.model_deployments` map, so you can add any number of additional deployments beyond the account's own default deployment — see [`../README.md`](../README.md). Includes a 30s `time_sleep` before creation to avoid provisioning races right after the account/project are created. |
 | [`privateEndpoint/`](privateEndpoint/) | `azurerm_private_endpoint`, DNS zone group | Shared helper module — the other modules call this instead of duplicating private-endpoint boilerplate. |
 
 ## Design patterns used throughout

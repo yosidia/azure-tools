@@ -252,3 +252,27 @@ module "foundry_project_default" {
     module.monitoring,
   ]
 }
+
+############################################################
+# Additional AI Foundry model deployments
+#
+# The default model deployment (if any) is handled inside the
+# "foundry" module via enable_default_model_deployment. This block
+# lets you deploy any number of *additional* named model deployments
+# (e.g. a second GPT model at a different capacity/SKU) without
+# touching the account resource itself. Empty by default — populate
+# var.model_deployments in your tfvars to add one or more.
+############################################################
+module "foundry_model_deployments" {
+  for_each = var.model_deployments
+  source   = "./modules/foundryModel"
+
+  parent_id       = module.ai_services.foundry_id
+  deployment_name = each.key
+  model_name      = each.value.model_name
+  model_version   = each.value.model_version
+  sku_name        = try(each.value.sku_name, "GlobalStandard")
+  capacity        = try(each.value.capacity, 1)
+
+  depends_on = [module.ai_services]
+}

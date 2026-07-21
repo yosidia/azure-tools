@@ -68,3 +68,15 @@ pe_subnet_nsg_resource_group_name    = "<hub-network-rg>"
 agent_subnet_address_prefix          = "10.0.2.0/24"
 pe_subnet_address_prefix             = "10.0.1.0/24"
 dns_resolver_ip                      = "10.0.0.4"
+
+# Additional model deployments (optional; leave as {} for none).
+# Uncomment and edit to deploy one or more named model deployments beyond
+# whatever default deployment the "foundry" module itself manages.
+# model_deployments = {
+#   "chat-gpt-4o-mini" = {
+#     model_name    = "gpt-4o-mini"
+#     model_version = "2024-07-18"
+#     sku_name      = "GlobalStandard"
+#     capacity      = 50
+#   }
+# }

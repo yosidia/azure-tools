@@ -47,3 +47,8 @@ output "ampls_id" {
   description = "Azure Monitor Private Link Scope (AMPLS) resource ID."
   value       = module.monitoring.ampls_id
 }
+
+output "model_deployment_ids" {
+  description = "Map of additional model deployment names to their resource IDs (from var.model_deployments)."
+  value       = { for k, m in module.foundry_model_deployments : k => m.deployment_id }
+}

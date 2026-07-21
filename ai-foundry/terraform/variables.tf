@@ -271,3 +271,33 @@ variable "dns_resolver_ip" {
   type        = string
   default     = null
 }
+
+############################################################
+# Additional model deployments
+############################################################
+variable "model_deployments" {
+  description = <<-EOT
+    Additional AI Foundry model deployments to create on top of the account,
+    keyed by deployment name. Each entry accepts:
+      model_name    - required, e.g. "gpt-4o-mini"
+      model_version - required, e.g. "2024-07-18"
+      sku_name      - optional, default "GlobalStandard"
+      capacity      - optional (SKU capacity / TPM units), default 1
+
+    Example:
+      model_deployments = {
+        "chat-gpt-4o-mini" = {
+          model_name    = "gpt-4o-mini"
+          model_version = "2024-07-18"
+          capacity      = 50
+        }
+      }
+  EOT
+  type = map(object({
+    model_name    = string
+    model_version = string
+    sku_name      = optional(string)
+    capacity      = optional(number)
+  }))
+  default = {}
+}

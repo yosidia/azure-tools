@@ -16,9 +16,10 @@ Resource Group
  ├─ Azure AI Search (private)
  ├─ Cosmos DB (private; diagnostics -> Monitoring)
  ├─ NSG rules (agent subnet -> Azure Monitor PE, agent subnet -> DNS)
- └─ Foundry default project
-     ├─ connections: Storage, Cosmos DB (threads), AI Search (vectors), App Insights
-     └─ capability host (Agents) wiring the three connections above
+ ├─ Foundry default project
+ │   ├─ connections: Storage, Cosmos DB (threads), AI Search (vectors), App Insights
+ │   └─ capability host (Agents) wiring the three connections above
+ └─ Additional model deployments (optional, var.model_deployments, 0..N)
 ```
 
 Everything is deployed with `publicNetworkAccess` disabled and identity-based
@@ -38,7 +39,30 @@ every other module.
 | [`outputs.tf`](outputs.tf) | Root-level outputs (endpoints, resource IDs) for wiring into other stacks or CI/CD. |
 | [`providers.tf`](providers.tf) | Required provider versions: `azurerm >= 4.0`, `azapi >= 2.0` (used for the Foundry account/project/capability-host resources — these preview-surface APIs aren't in `azurerm` yet), `time >= 0.11`, `random >= 3.6`. |
 | [`terraform.tfvars.example`](terraform.tfvars.example) | Example variable values with placeholders — copy to `terraform.tfvars` (git-ignored) and fill in your own subscription/network values. |
-| [`modules/`](modules/) | The 7 child modules — see [`modules/README.md`](modules/README.md). |
+| [`modules/`](modules/) | The 8 child modules — see [`modules/README.md`](modules/README.md). |
+
+## Deploying additional models
+
+The `foundry` module can optionally create one default model deployment
+(`enable_default_model_deployment`), but most environments need more than
+one model. Add entries to `var.model_deployments` (see the commented example
+in [`terraform.tfvars.example`](terraform.tfvars.example)) and the root module
+creates one [`modules/foundryModel`](modules/foundryModel/) instance per entry
+via `for_each` — no changes to `main.tf` needed:
+
+```hcl
+model_deployments = {
+  "chat-gpt-4o-mini" = {
+    model_name    = "gpt-4o-mini"
+    model_version = "2024-07-18"
+    sku_name      = "GlobalStandard" # optional, this is the default
+    capacity      = 50               # optional, defaults to 1
+  }
+}
+```
+
+Deployment IDs are exposed via the `model_deployment_ids` output (a map keyed
+by deployment name).
 
 ## Usage
 
